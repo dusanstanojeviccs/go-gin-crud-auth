@@ -1,6 +1,7 @@
 package users
 
 import (
+	"go-gin-crud-auth/security"
 	"net/http"
 	"strconv"
 
@@ -55,6 +56,6 @@ func RegisterEndpoints(server *gin.Engine) {
 	server.GET("/users", get)
 	server.GET("/users/:id", getById)
 	server.POST("/users", post)
-	server.PUT("/users/:id", put)
-	server.DELETE("/users/:id", delete)
+	server.PUT("/users/:id", security.LoggedInFilter, put)
+	server.DELETE("/users/:id", security.LoggedInFilter, delete)
 }
