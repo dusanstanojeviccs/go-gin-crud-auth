@@ -2,60 +2,109 @@ package users
 
 import (
 	"go-gin-crud-auth/security"
+	"go-gin-crud-auth/utils"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
-func get(ctx *gin.Context) {
-	ctx.JSON(200, UserRepository.findAll())
+type SignUpRequest struct {
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
-func getById(ctx *gin.Context) {
-	id, _ := strconv.Atoi(ctx.Param("id"))
+func signup(ctx *gin.Context) {
+	signUpRequest := new(SignUpRequest)
 
-	ctx.JSON(200, UserRepository.findById(id))
-}
+	ctx.BindJSON(signUpRequest)
 
-func post(ctx *gin.Context) {
-	user := new(User)
+	saltedPassword, error := bcrypt.GenerateFromPassword([]byte(signUpRequest.Password), 13)
 
-	ctx.BindJSON(user)
+	if error != nil {
+		ctx.AbortWithStatus(http.StatusBadRequest)
+	}
+
+	user := &User{
+		Name:     signUpRequest.Name,
+		Email:    signUpRequest.Email,
+		Password: string(saltedPassword[:]),
+	}
 
 	UserRepository.create(user)
 
-	ctx.JSON(200, *user)
+	utils.Session.SetUserId(ctx, user.Id)
+	utils.Cookies.SetSessionCookie(
+		ctx,
+		utils.Jwt.GenerateSessionCookie(user.Id),
+	)
+
+	current(ctx)
 }
 
-func put(ctx *gin.Context) {
-	id, _ := strconv.Atoi(ctx.Param("id"))
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
 
-	user := new(User)
+func login(ctx *gin.Context) {
+	// if the user exists logs them in
+	// sends the set-cookie header back
 
-	ctx.BindJSON(user)
+	loginRequest := new(LoginRequest)
 
-	if user.Id != id {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Id missmatch"})
+	ctx.BindJSON(loginRequest)
+
+	foundUser := UserRepository.findByEmail(loginRequest.Email)
+
+	if foundUser != nil {
+
+		error := bcrypt.CompareHashAndPassword(
+			[]byte(foundUser.Password),
+			[]byte(loginRequest.Password),
+		)
+
+		if error == nil {
+			// we need to login and write the cookie header
+			utils.Session.SetUserId(ctx, foundUser.Id)
+			utils.Cookies.SetSessionCookie(
+				ctx,
+				utils.Jwt.GenerateSessionCookie(foundUser.Id),
+			)
+
+			current(ctx)
+		}
+	}
+
+	ctx.AbortWithStatus(http.StatusBadRequest)
+}
+
+type CurrentUser struct {
+	Id    int    `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+func current(ctx *gin.Context) {
+	userId := utils.Session.GetUserId(ctx)
+
+	user := UserRepository.findById(userId)
+
+	if user == nil {
+		ctx.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
 
-	UserRepository.update(user)
-
-	ctx.JSON(200, *user)
+	ctx.JSON(200, &CurrentUser{
+		Id:    user.Id,
+		Name:  user.Name,
+		Email: user.Email,
+	})
 }
 
-func delete(ctx *gin.Context) {
-	id, _ := strconv.Atoi(ctx.Param("id"))
-
-	UserRepository.delete(id)
-
-	ctx.JSON(200, gin.H{})
-}
 func RegisterEndpoints(server *gin.Engine) {
-	server.GET("/users", get)
-	server.GET("/users/:id", getById)
-	server.POST("/users", post)
-	server.PUT("/users/:id", security.LoggedInFilter, put)
-	server.DELETE("/users/:id", security.LoggedInFilter, delete)
+	server.POST("/signup", signup)
+	server.POST("/login", login)
+	server.GET("/users/current", security.LoggedInFilter, current)
 }

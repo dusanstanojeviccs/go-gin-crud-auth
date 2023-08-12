@@ -7,11 +7,16 @@ type userRepository struct {
 	users []*User
 }
 
-func (this *userRepository) findAll() []*User {
+func (this *userRepository) findByEmail(email string) *User {
 	this.mu.Lock()
 	defer this.mu.Unlock()
 
-	return this.users
+	for _, user := range this.users {
+		if user.Email == email {
+			return user
+		}
+	}
+	return nil
 }
 
 func (this *userRepository) findById(id int) *User {
@@ -24,20 +29,6 @@ func (this *userRepository) findById(id int) *User {
 		}
 	}
 	return nil
-}
-
-func (this *userRepository) delete(id int) {
-	this.mu.Lock()
-	defer this.mu.Unlock()
-
-	newUsers := []*User{}
-
-	for _, user := range this.users {
-		if user.Id != id {
-			newUsers = append(newUsers, user)
-		}
-	}
-	this.users = newUsers
 }
 
 func (this *userRepository) create(user *User) {
