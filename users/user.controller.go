@@ -36,6 +36,7 @@ func put(ctx *gin.Context) {
 
 	if user.Id != id {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Id missmatch"})
+		return
 	}
 
 	UserRepository.update(user)
