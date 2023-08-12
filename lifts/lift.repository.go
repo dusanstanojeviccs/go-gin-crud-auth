@@ -1,4 +1,4 @@
-package books
+package lifts
 
 import "sync"
 
@@ -41,7 +41,7 @@ func (this *liftRepository) delete(id int, userId int) {
 	newLifts := []*Lift{}
 
 	for _, lift := range this.lifts {
-		if lift.Id != id && lift.UserId != userId {
+		if lift.Id != id || lift.UserId != userId {
 			newLifts = append(newLifts, lift)
 		}
 	}

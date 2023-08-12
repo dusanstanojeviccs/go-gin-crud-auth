@@ -1,4 +1,4 @@
-package books
+package lifts
 
 type Lift struct {
 	Id     int    `json:"id"`

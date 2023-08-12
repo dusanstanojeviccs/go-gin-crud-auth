@@ -1,4 +1,4 @@
-package books
+package lifts
 
 import (
 	"go-gin-crud-auth/security"
@@ -19,7 +19,13 @@ func getById(ctx *gin.Context) {
 	id, _ := strconv.Atoi(ctx.Param("id"))
 	userId := utils.Session.GetUserId(ctx)
 
-	ctx.JSON(200, LiftRepository.findById(id, userId))
+	lift := LiftRepository.findById(id, userId)
+
+	if lift == nil {
+		ctx.AbortWithStatus(http.StatusNotFound)
+	}
+
+	ctx.JSON(200, lift)
 }
 
 func post(ctx *gin.Context) {
