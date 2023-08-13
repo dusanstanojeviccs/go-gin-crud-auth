@@ -4,11 +4,14 @@ import (
 	"go-gin-crud-auth/lifts"
 	"go-gin-crud-auth/middleware"
 	"go-gin-crud-auth/users"
+	"go-gin-crud-auth/utils/db"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
+	db.Init()
+
 	server := gin.Default()
 
 	server.Use(middleware.Auth)

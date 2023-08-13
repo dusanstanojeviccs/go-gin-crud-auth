@@ -1,53 +1,40 @@
 package users
 
-import "sync"
+import (
+	"database/sql"
+	"go-gin-crud-auth/utils/db"
+)
 
-type userRepository struct {
-	mu    sync.Mutex
-	users []*User
+type userRepository struct{}
+
+func userMapper(rows *sql.Rows, u *User) error {
+	return rows.Scan(&u.Id, &u.Name, &u.Email, &u.Password)
 }
 
-func (this *userRepository) findByEmail(email string) *User {
-	this.mu.Lock()
-	defer this.mu.Unlock()
-
-	for _, user := range this.users {
-		if user.Email == email {
-			return user
-		}
-	}
-	return nil
+func (this *userRepository) findByEmail(email string) (*User, error) {
+	return db.SelectSingle[User](
+		userMapper,
+		"SELECT id, name, email, password FROM users WHERE email = ?",
+		email,
+	)
 }
 
-func (this *userRepository) findById(id int) *User {
-	this.mu.Lock()
-	defer this.mu.Unlock()
-
-	for _, user := range this.users {
-		if user.Id == id {
-			return user
-		}
-	}
-	return nil
+func (this *userRepository) findById(id int) (*User, error) {
+	return db.SelectSingle[User](
+		userMapper,
+		"SELECT id, name, email, password FROM users WHERE id = ?",
+		id,
+	)
 }
 
-func (this *userRepository) create(user *User) {
-	this.mu.Lock()
-	defer this.mu.Unlock()
+func (this *userRepository) create(user *User) error {
+	id, error := db.Insert(
+		"INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+		user.Name, user.Email, user.Password,
+	)
+	user.Id = id
 
-	user.Id = len(this.users) + 1
-	this.users = append(this.users, user)
+	return error
 }
 
-func (this *userRepository) update(user *User) {
-	this.mu.Lock()
-	defer this.mu.Unlock()
-
-	for i, existingUser := range this.users {
-		if existingUser.Id == user.Id {
-			this.users[i] = user
-		}
-	}
-}
-
-var UserRepository = userRepository{users: []*User{}}
+var UserRepository = userRepository{}

@@ -56,7 +56,11 @@ func login(ctx *gin.Context) {
 
 	ctx.BindJSON(loginRequest)
 
-	foundUser := UserRepository.findByEmail(loginRequest.Email)
+	foundUser, error := UserRepository.findByEmail(loginRequest.Email)
+	if error != nil {
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
 
 	if foundUser != nil {
 
@@ -89,7 +93,12 @@ type CurrentUser struct {
 func current(ctx *gin.Context) {
 	userId := utils.Session.GetUserId(ctx)
 
-	user := UserRepository.findById(userId)
+	user, error := UserRepository.findById(userId)
+
+	if error != nil {
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
 
 	if user == nil {
 		ctx.AbortWithStatus(http.StatusBadRequest)

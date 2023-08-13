@@ -12,7 +12,7 @@ type AppClaims struct {
 type jwtUtils struct {
 }
 
-var key = []byte("THIS_WILL_BE_OUR_ENV_VAR_SOON")
+var key = []byte("THIS_WILL_BE_OUR_ENV_VAR_SOON") // TODO: replace with env
 
 func signer(t *jwt.Token) (interface{}, error) {
 	return key, nil

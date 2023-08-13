@@ -12,16 +12,22 @@ import (
 func get(ctx *gin.Context) {
 	userId := utils.Session.GetUserId(ctx)
 
-	ctx.JSON(200, LiftRepository.findAll(userId))
+	lifts, err := LiftRepository.findAll(userId)
+
+	if err != nil {
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+	}
+
+	ctx.JSON(200, &lifts)
 }
 
 func getById(ctx *gin.Context) {
 	id, _ := strconv.Atoi(ctx.Param("id"))
 	userId := utils.Session.GetUserId(ctx)
 
-	lift := LiftRepository.findById(id, userId)
+	lift, err := LiftRepository.findById(id, userId)
 
-	if lift == nil {
+	if err != nil || lift == nil {
 		ctx.AbortWithStatus(http.StatusNotFound)
 	}
 
