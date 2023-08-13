@@ -1,9 +1,9 @@
 package main
 
 import (
-	"go-gin-crud-auth/lifts"
+	"go-gin-crud-auth/app/lifts"
+	"go-gin-crud-auth/app/users"
 	"go-gin-crud-auth/middleware"
-	"go-gin-crud-auth/users"
 	"go-gin-crud-auth/utils/db"
 
 	"github.com/gin-gonic/gin"

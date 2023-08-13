@@ -24,12 +24,27 @@ func signup(ctx *gin.Context) {
 
 	if error != nil {
 		ctx.AbortWithStatus(http.StatusBadRequest)
+		return
 	}
 
 	user := &User{
 		Name:     signUpRequest.Name,
 		Email:    signUpRequest.Email,
 		Password: string(saltedPassword[:]),
+	}
+
+	validations := &[]*utils.ValidationMessage{}
+
+	error = validate(validations, user)
+
+	if error != nil {
+		ctx.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	if len(*validations) > 0 {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, validations)
+		return
 	}
 
 	UserRepository.create(user)
