@@ -12,11 +12,11 @@ var DB *sql.DB
 
 func Init() {
 	cfg := mysql.Config{
-		User:   "root", // TODO: replace with env
-		Passwd: "root", // TODO: replace with env
+		User:   utils.Config.Database.Username,
+		Passwd: utils.Config.Database.Password,
 		Net:    "tcp",
-		Addr:   "127.0.0.1:3306", // TODO: replace with env
-		DBName: "powerlifterplpus",
+		Addr:   utils.Config.Database.Host,
+		DBName: utils.Config.Database.DatabaseName,
 	}
 
 	var err error
