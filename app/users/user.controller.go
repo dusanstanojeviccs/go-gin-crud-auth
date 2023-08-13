@@ -1,8 +1,9 @@
 package users
 
 import (
-	"go-gin-crud-auth/security"
+	"go-gin-crud-auth/middleware/security"
 	"go-gin-crud-auth/utils"
+	"go-gin-crud-auth/utils/db"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -35,7 +36,7 @@ func signup(ctx *gin.Context) {
 
 	validations := &[]*utils.ValidationMessage{}
 
-	error = validate(validations, user)
+	error = validate(db.GetTx(ctx), validations, user)
 
 	if error != nil {
 		ctx.AbortWithStatus(http.StatusBadRequest)
@@ -47,7 +48,7 @@ func signup(ctx *gin.Context) {
 		return
 	}
 
-	UserRepository.create(user)
+	UserRepository.create(db.GetTx(ctx), user)
 
 	utils.Session.SetUserId(ctx, user.Id)
 	utils.Cookies.SetSessionCookie(
@@ -71,7 +72,7 @@ func login(ctx *gin.Context) {
 
 	ctx.BindJSON(loginRequest)
 
-	foundUser, error := UserRepository.findByEmail(loginRequest.Email)
+	foundUser, error := UserRepository.findByEmail(db.GetTx(ctx), loginRequest.Email)
 	if error != nil {
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
@@ -108,7 +109,7 @@ type CurrentUser struct {
 func current(ctx *gin.Context) {
 	userId := utils.Session.GetUserId(ctx)
 
-	user, error := UserRepository.findById(userId)
+	user, error := UserRepository.findById(db.GetTx(ctx), userId)
 
 	if error != nil {
 		ctx.AbortWithStatus(http.StatusInternalServerError)

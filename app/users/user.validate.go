@@ -1,10 +1,11 @@
 package users
 
 import (
+	"database/sql"
 	"go-gin-crud-auth/utils"
 )
 
-func validate(validationMessages *[]*utils.ValidationMessage, user *User) error {
+func validate(tx *sql.Tx, validationMessages *[]*utils.ValidationMessage, user *User) error {
 	if len(user.Name) < 3 {
 		*validationMessages = append(*validationMessages, &utils.ValidationMessage{
 			Field:   "name",
@@ -12,7 +13,7 @@ func validate(validationMessages *[]*utils.ValidationMessage, user *User) error 
 		})
 	}
 
-	existingUser, err := UserRepository.findByEmail(user.Email)
+	existingUser, err := UserRepository.findByEmail(tx, user.Email)
 
 	if err != nil {
 		return err

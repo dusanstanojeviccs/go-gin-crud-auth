@@ -5,6 +5,7 @@ import (
 	"go-gin-crud-auth/utils"
 	"log"
 
+	"github.com/gin-gonic/gin"
 	"github.com/go-sql-driver/mysql"
 )
 
@@ -33,8 +34,21 @@ func Init() {
 	}
 }
 
-func SelectMultiple[T any](mapLine func(*sql.Rows, *T) error, query string, args ...any) ([]*T, error) {
-	rows, err := DB.Query(query, args...)
+const TX_HANDLE_KEY = "TRANSACTION_HANDLE"
+
+func SetTransaction(c *gin.Context, txHandle *sql.Tx) {
+	c.Set(TX_HANDLE_KEY, txHandle)
+}
+
+func GetTx(c *gin.Context) *sql.Tx {
+	if tx, exists := c.Get(TX_HANDLE_KEY); exists {
+		return tx.(*sql.Tx)
+	}
+	return nil
+}
+
+func SelectMultiple[T any](txHandle *sql.Tx, mapLine func(*sql.Rows, *T) error, query string, args ...any) ([]*T, error) {
+	rows, err := txHandle.Query(query, args...)
 	if err != nil {
 		return nil, utils.Error.Report(err)
 	}
@@ -55,8 +69,8 @@ func SelectMultiple[T any](mapLine func(*sql.Rows, *T) error, query string, args
 	}
 	return list, nil
 }
-func SelectSingle[T any](mapLine func(*sql.Rows, *T) error, query string, args ...any) (*T, error) {
-	rows, err := DB.Query(query, args...)
+func SelectSingle[T any](txHandle *sql.Tx, mapLine func(*sql.Rows, *T) error, query string, args ...any) (*T, error) {
+	rows, err := txHandle.Query(query, args...)
 	if err != nil {
 		return nil, utils.Error.Report(err)
 	}
@@ -75,8 +89,8 @@ func SelectSingle[T any](mapLine func(*sql.Rows, *T) error, query string, args .
 	return nil, nil
 }
 
-func Insert(query string, args ...any) (int, error) {
-	result, err := DB.Exec(query, args...)
+func Insert(txHandle *sql.Tx, query string, args ...any) (int, error) {
+	result, err := txHandle.Exec(query, args...)
 	if err != nil {
 		return 0, utils.Error.Report(err)
 	}
@@ -89,8 +103,8 @@ func Insert(query string, args ...any) (int, error) {
 	return int(id), nil
 }
 
-func Update(query string, args ...any) error {
-	_, err := DB.Exec(query, args...)
+func Update(txHandle *sql.Tx, query string, args ...any) error {
+	_, err := txHandle.Exec(query, args...)
 	if err != nil {
 		return utils.Error.Report(err)
 	}
@@ -98,8 +112,8 @@ func Update(query string, args ...any) error {
 	return nil
 }
 
-func Delete(query string, args ...any) error {
-	_, err := DB.Exec(query, args...)
+func Delete(txHandle *sql.Tx, query string, args ...any) error {
+	_, err := txHandle.Exec(query, args...)
 	if err != nil {
 		return utils.Error.Report(err)
 	}

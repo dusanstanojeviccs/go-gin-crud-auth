@@ -18,6 +18,8 @@ func main() {
 	server := gin.Default()
 
 	server.Use(middleware.Auth)
+	server.Use(middleware.Transactional)
+
 	users.RegisterEndpoints(server)
 	lifts.RegisterEndpoints(server)
 
