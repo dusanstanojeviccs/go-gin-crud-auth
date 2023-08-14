@@ -4,6 +4,7 @@ import (
 	"go-gin-crud-auth/middleware/security"
 	"go-gin-crud-auth/utils"
 	"go-gin-crud-auth/utils/db"
+	"go-gin-crud-auth/utils/jwt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -53,7 +54,7 @@ func signup(ctx *gin.Context) {
 	utils.Session.SetUserId(ctx, user.Id)
 	utils.Cookies.SetSessionCookie(
 		ctx,
-		utils.Jwt.GenerateSessionCookie(user.Id),
+		jwt.Jwt.GenerateSessionCookie(user.Id),
 	)
 
 	current(ctx)
@@ -90,7 +91,7 @@ func login(ctx *gin.Context) {
 			utils.Session.SetUserId(ctx, foundUser.Id)
 			utils.Cookies.SetSessionCookie(
 				ctx,
-				utils.Jwt.GenerateSessionCookie(foundUser.Id),
+				jwt.Jwt.GenerateSessionCookie(foundUser.Id),
 			)
 
 			current(ctx)

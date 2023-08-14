@@ -6,6 +6,7 @@ import (
 	"go-gin-crud-auth/middleware"
 	"go-gin-crud-auth/utils"
 	"go-gin-crud-auth/utils/db"
+	"go-gin-crud-auth/utils/jwt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,6 +15,7 @@ func main() {
 	utils.Config.Init()
 
 	db.Init()
+	jwt.Init()
 
 	server := gin.Default()
 

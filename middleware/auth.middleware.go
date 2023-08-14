@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"go-gin-crud-auth/utils"
+	"go-gin-crud-auth/utils/jwt"
 	"net/http"
 	"strings"
 
@@ -30,6 +31,8 @@ func Auth(c *gin.Context) {
 		// the request can procced but the per end point
 		// security should block it
 		if sessionCookie == "" {
+			utils.Session.SetUserId(c, 0)
+			utils.Cookies.SetSessionCookie(c, jwt.Jwt.GenerateSessionCookie(0))
 			c.Next()
 			return
 		}
@@ -40,13 +43,15 @@ func Auth(c *gin.Context) {
 	// at this point it's guaranteed that the cookie or the authorization header was present
 	// which means that it must be valid and contain a userId claim
 
-	userId, valid := utils.Jwt.ParseSessionCookie(auth)
+	userId, valid := jwt.Jwt.ParseSessionCookie(auth)
 
 	if valid {
 		utils.Session.SetUserId(c, userId)
 		c.Next()
 	} else {
 		utils.Session.SetUserId(c, 0)
-		c.AbortWithStatus(http.StatusUnauthorized)
+		utils.Cookies.SetSessionCookie(c, jwt.Jwt.GenerateSessionCookie(0))
+		// we clear the session and process the request
+		c.Next()
 	}
 }

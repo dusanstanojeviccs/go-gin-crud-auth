@@ -7,7 +7,8 @@ import (
 )
 
 type serverConfig struct { // prefix SERVER_
-	Address string
+	Address   string
+	JwtSecret string
 }
 type databaseConfig struct { // prefix DATABASE_
 	Username     string
@@ -27,7 +28,8 @@ func (this *config) Init() {
 	godotenv.Load("dev.env")
 
 	this.Server = serverConfig{
-		Address: os.Getenv("SERVER_ADDRESS"),
+		Address:   os.Getenv("SERVER_ADDRESS"),
+		JwtSecret: os.Getenv("SERVER_JWT_SECRET"),
 	}
 
 	this.Database = databaseConfig{

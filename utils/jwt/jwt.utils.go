@@ -1,6 +1,8 @@
-package utils
+package jwt
 
 import (
+	"go-gin-crud-auth/utils"
+
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -10,18 +12,17 @@ type AppClaims struct {
 }
 
 type jwtUtils struct {
+	key []byte
 }
 
-var key = []byte("THIS_WILL_BE_OUR_ENV_VAR_SOON") // TODO: replace with env
-
-func signer(t *jwt.Token) (interface{}, error) {
-	return key, nil
+func (this *jwtUtils) signer(t *jwt.Token) (interface{}, error) {
+	return this.key, nil
 }
 
 func (this *jwtUtils) GenerateSessionCookie(userId int) string {
 	value, error := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"userId": userId,
-	}).SignedString(key)
+	}).SignedString(this.key)
 
 	if error != nil {
 		return ""
@@ -33,7 +34,7 @@ func (this *jwtUtils) GenerateSessionCookie(userId int) string {
 func (this *jwtUtils) ParseSessionCookie(auth string) (userId int, valid bool) {
 	valid = true
 
-	token, error := jwt.ParseWithClaims(auth, &AppClaims{}, signer)
+	token, error := jwt.ParseWithClaims(auth, &AppClaims{}, this.signer)
 
 	if error != nil {
 		valid = false
@@ -53,4 +54,11 @@ func (this *jwtUtils) ParseSessionCookie(auth string) (userId int, valid bool) {
 	return
 }
 
-var Jwt = jwtUtils{}
+var Jwt *jwtUtils
+
+func Init() {
+	if Jwt != nil {
+		panic("JWT has already been initialized")
+	}
+	Jwt = &jwtUtils{key: []byte(utils.Config.Server.JwtSecret)}
+}
